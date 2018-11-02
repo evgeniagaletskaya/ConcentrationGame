@@ -8,24 +8,38 @@
 
 import Foundation
 
-class Concentration {
+struct Concentration {
     
-    var cards = [Card]()
+    private(set) var cards = [Card]()
     var score = 0
     var flips = 0
     
     // check if only ONE card is face up
-    var indexOfOneAndOnlyFaceUpCard: Int?
+   private var indexOfOneAndOnlyFaceUpCard: Int? {
+        get {
+            return cards.indices.filter { cards[$0].isFaceUp }.oneAndOnly
+        }
+        set {
+            for index in cards.indices {
+                cards[index].isFaceUp = (index == newValue)
+            }
+            
+        }
+    }
     
-    func chooseCard(at index: Int) {
+    mutating func chooseCard(at index: Int) {
+        
+        assert(cards.indices.contains(index), "Concentration.chooseCard(at:\(index)): chosen index not in the cards ")
         flips += 0
+        
         //if card at this index is already matched, ignore it
         if !cards[index].isMatched {
             
             //if there IS one and only one card face up, take its index & make sure its index isn't the same, that you chose
+            
             if let matchIndex = indexOfOneAndOnlyFaceUpCard, matchIndex != index {
                 // check if cards match
-                if cards[matchIndex].identifier == cards[index].identifier {
+                if cards[matchIndex] == cards[index] {
                     cards[matchIndex].isMatched = true
                     cards[index].isMatched = true
                     score += 2
@@ -35,26 +49,21 @@ class Concentration {
                     print("one of the cards was already seen")
                 }
                 cards[index].isFaceUp = true // if the 2 cards didn't match, the chosen card is now face up
-                indexOfOneAndOnlyFaceUpCard = nil // and there's no more one and only one card face up
                 cards[index].numberOfCardFlips += 1
                 cards[matchIndex].numberOfCardFlips += 1
             } else {
-                // either no cards or 2 cards are face up
-                for flipDownIndex in cards.indices {
-                    cards[flipDownIndex].isFaceUp = false
-                }
-                cards[index].isFaceUp = true
                 indexOfOneAndOnlyFaceUpCard = index
                 }
             }
         }
     
-    func resetCards(){
+    mutating func resetCards(){
         cards.removeAll()
     }
     
     init (numberOfPairsOfCards: Int) {
-        //TODO: shuffle the cards - COMPLETE
+        assert(numberOfPairsOfCards > 0, "Concentration.init(\(numberOfPairsOfCards)): you must have at least one pair of cards")
+        
         var preShuffledCards = [Card]()
         
         for _ in 1...numberOfPairsOfCards {
@@ -67,4 +76,10 @@ class Concentration {
             cards.append(randomCard)
         }
      }
+}
+
+extension Collection {
+    var oneAndOnly: Element? {
+        return count == 1 ? first : nil
+    }
 }
